@@ -1,43 +1,78 @@
 $(document).ready(function() {
-  var username = generateRandomCode(); // Generowanie losowego kodu
-  var chat = $('#chat');
-  var messages = $('#messages');
-  var messageForm = $('#messageForm');
-  var messageInput = $('#messageInput');
-  var imageInput = $('#imageInput');
+  var loginCode = generateLoginCode(); // Wygenerowanie losowego kodu logowania
 
-  // Wyślij wiadomość po kliknięciu przycisku lub naciśnięciu Enter
-  messageForm.submit(function(e) {
-    e.preventDefault();
-    var messageText = messageInput.val();
-    var imageData = imageInput.prop('files')[0];
-    sendMessage(username, messageText, imageData);
-    messageInput.val('');
-    imageInput.val('');
+  // Wyświetlanie formularza logowania
+  $('#login-code').val(loginCode);
+  $('#login-container').show();
+
+  // Obsługa logowania
+  $('#login-button').click(function() {
+    var enteredCode = $('#login-code').val();
+    if (enteredCode === loginCode) {
+      $('#login-container').hide();
+      $('#chat-container').show();
+      loadMessages();
+    } else {
+      alert('Logowanie się nie powiodło. Wprowadź poprawny kod logowania.');
+    }
   });
 
-  // Pobierz i wyświetl poprzednie wiadomości
-  fetchMessages();
+  // Obsługa wysyłania wiadomości
+  $('#send-button').click(function() {
+    var message = $('#message-input').val();
+    var image = $('#image-input')[0].files[0];
 
-  // Generowanie losowego kodu
-  function generateRandomCode() {
+    if (message !== '' || image) {
+      sendMessage(message, image);
+      $('#message-input').val('');
+      $('#image-input').val('');
+    }
+  });
+
+  // Generowanie losowego kodu logowania
+  function generateLoginCode() {
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     var code = '';
     for (var i = 0; i < 5; i++) {
-      var randomIndex = Math.floor(Math.random() * characters.length);
-      code += characters.charAt(randomIndex);
+      code += characters.charAt(Math.floor(Math.random() * characters.length));
     }
     return code;
   }
 
-  // Wyślij wiadomość na serwer
-  function sendMessage(username, message, image) {
+  // Ładowanie wiadomości z serwera
+  function loadMessages() {
+    $.ajax({
+      url: 'get_messages.php',
+      type: 'GET',
+      dataType: 'json',
+      success: function(data) {
+        $('#messages-container').empty();
+        for (var i = data.length - 1; i >= 0; i--) {
+          var message = data[i];
+          var timestamp = formatTimestamp(message.timestamp);
+          var html = '<div class="message">' +
+                       '<div class="message-header">' +
+                         '<span class="username">' + message.username + '</span>' +
+                         '<span class="timestamp">' + timestamp + '</span>' +
+                       '</div>' +
+                       '<div class="message-body">' +
+                         '<p>' + message.message + '</p>';
+          if (message.image) {
+            html += '<img src="data:image/jpeg;base64,' + message.image + '" />';
+          }
+          html += '</div></div>';
+          $('#messages-container').append(html);
+        }
+      }
+    });
+  }
+
+  // Wysyłanie wiadomości na serwer
+  function sendMessage(message, image) {
     var formData = new FormData();
-    formData.append('username', username);
     formData.append('message', message);
-    if (image) {
-      formData.append('image', image);
-    }
+    formData.append('image', image);
+
     $.ajax({
       url: 'save_message.php',
       type: 'POST',
@@ -45,33 +80,7 @@ $(document).ready(function() {
       contentType: false,
       processData: false,
       success: function() {
-        fetchMessages();
-      },
-      error: function() {
-        alert('Wysłanie wiadomości nie powiodło się.');
-      }
-    });
-  }
-
-  // Pobierz i wyświetl wiadomości
-  function fetchMessages() {
-    $.ajax({
-      url: 'get_messages.php',
-      type: 'GET',
-      dataType: 'json',
-      success: function(response) {
-        messages.empty();
-        response.forEach(function(message) {
-          var messageElement = $('<div>').addClass('message');
-          var usernameElement = $('<span>').addClass('username').text(message.username);
-          var timestampElement = $('<span>').addClass('timestamp').text(formatTimestamp(message.timestamp));
-          var textElement = $('<p>').addClass('text').text(message.message);
-          messageElement.append(usernameElement, timestampElement, textElement);
-          messages.prepend(messageElement);
-        });
-      },
-      error: function() {
-        alert('Pobranie wiadomości nie powiodło się.');
+        loadMessages();
       }
     });
   }
@@ -79,7 +88,8 @@ $(document).ready(function() {
   // Formatowanie znacznika czasu
   function formatTimestamp(timestamp) {
     var date = new Date(timestamp);
-    var options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' };
-    return date.toLocaleString('pl-PL', options);
+    var options = { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return date.toLocaleDateString('pl-PL', options);
   }
 });
+
