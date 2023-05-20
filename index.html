@@ -2,125 +2,18 @@
 <html>
 <head>
   <title>Chat</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="script.js"></script>
 </head>
 <body>
-  <div id="chat-container" style="display: none;">
-    <h2>Chat</h2>
-    <div id="message-container"></div>
-    <div>
-      <label for="message-input">Wiadomość:</label>
-      <input type="text" id="message-input">
-    </div>
-    <button onclick="wyslijWiadomosc()">Wyślij</button>
-    <button onclick="wyloguj()">Wyloguj</button>
+  <h1>Witaj w chatcie!</h1>
+  <div id="chat">
+    <div id="messages"></div>
+    <form id="messageForm">
+      <input type="text" id="messageInput" placeholder="Wpisz wiadomość..." />
+      <input type="file" id="imageInput" accept="image/*" />
+      <button type="submit">Wyślij</button>
+    </form>
   </div>
-
-  <script>
-    let currentUser = null;
-
-    function generateRandomCode() {
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < 5; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        code += characters.charAt(randomIndex);
-      }
-      return code;
-    }
-
-    function logowanie() {
-      const code = document.getElementById('login-code').value;
-
-      // Sprawdź, czy podany kod jest prawidłowy
-      // W rzeczywistym środowisku, należy to połączyć z odpowiednią logiką uwierzytelniania
-      if (code.length !== 5) {
-        alert('Nieprawidłowy kod logowania!');
-        return;
-      }
-
-      currentUser = code;
-      pokazChat();
-      wyswietlPoprzednieWiadomosci();
-    }
-
-    function pokazChat() {
-      document.getElementById('login-container').style.display = 'none';
-      document.getElementById('chat-container').style.display = 'block';
-    }
-
-    function wyswietlPoprzednieWiadomosci() {
-      // Pobierz wiadomości z pliku tekstowego
-      const xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          const wiadomosci = JSON.parse(xhr.responseText);
-          const messageContainer = document.getElementById('message-container');
-          messageContainer.innerHTML = '';
-
-          // Sortuj wiadomości wg daty
-          wiadomosci.sort((a, b) => {
-            return new Date(b.date) - new Date(a.date);
-          });
-
-          // Wyświetl wiadomości
-          for (let i = 0; i < wiadomosci.length; i++) {
-            const message = wiadomosci[i];
-
-            const div = document.createElement('div');
-            const strong = document.createElement('strong');
-            strong.textContent = message.user + ': ';
-            const text = document.createTextNode(message.message);
-            const small = document.createElement('small');
-            small.textContent = message.date;
-
-            div.appendChild(strong);
-            div.appendChild(text);
-            div.appendChild(document.createElement('br'));
-            div.appendChild(small);
-
-            messageContainer.appendChild(div);
-          }
-        }
-      };
-      xhr.open('GET', 'wiadomosci.php', true);
-      xhr.send();
-    }
-
-    function wyslijWiadomosc() {
-      const messageInput = document.getElementById('message-input');
-      const message = messageInput.value;
-
-      if (message) {
-        const currentTime = new Date();
-        const formattedTime = currentTime.toLocaleString();
-        const messageData = {
-          user: currentUser,
-          message: message,
-          date: formattedTime
-        };
-
-        // Wyślij wiadomość do serwera
-        const xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            // Aktualizuj wyświetlane wiadomości
-            wyswietlPoprzednieWiadomosci();
-
-            // Wyczyść pole wprowadzania wiadomości
-            messageInput.value = '';
-          }
-        };
-        xhr.open('POST', 'wyslij_wiadomosc.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.send(JSON.stringify(messageData));
-      }
-    }
-
-    function wyloguj() {
-      currentUser = null;
-      document.getElementById('chat-container').style.display = 'none';
-      document.getElementById('login-container').style.display = 'block';
-    }
-  </script>
 </body>
 </html>
