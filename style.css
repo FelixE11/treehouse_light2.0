@@ -1,0 +1,43 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+#login-container, #chat-container {
+  text-align: center;
+  margin-top: 100px;
+}
+
+#chat-container {
+  display: none;
+}
+
+#message-container {
+  height: 300px;
+  overflow-y: scroll;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+.message {
+  margin-bottom: 10px;
+}
+
+.message .username {
+  font-weight: bold;
+}
+
+.message .timestamp {
+  font-size: 12px;
+  color: #888;
+}
+
+input[type="text"], input[type="file"], button {
+  margin-top: 10px;
+}
+
+button {
+  padding: 5px 10px;
+}
